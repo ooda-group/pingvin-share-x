@@ -9,6 +9,7 @@ import Meta from "../../components/Meta";
 import Dropzone from "../../components/upload/Dropzone";
 import FileList from "../../components/upload/FileList";
 import showCompletedUploadModal from "../../components/upload/modals/showCompletedUploadModal";
+import showCreateReverseUploadModal from "../../components/upload/modals/showCreateReverseUploadModal";
 import showCreateUploadModal from "../../components/upload/modals/showCreateUploadModal";
 import useConfig from "../../hooks/config.hook";
 import useConfirmLeave from "../../hooks/confirm-leave.hook";
@@ -158,6 +159,16 @@ const Upload = ({
   };
 
   const showCreateUploadModalCallback = (files: FileUpload[]) => {
+    if (isReverseShare) {
+      showCreateReverseUploadModal(
+        modals,
+        config.get("share.shareIdLength"),
+        files,
+        uploadFiles,
+      );
+      return;
+    }
+
     showCreateUploadModal(
       modals,
       {
