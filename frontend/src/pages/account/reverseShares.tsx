@@ -22,7 +22,6 @@ import showReverseShareLinkModal from "../../components/account/showReverseShare
 import showShareLinkModal from "../../components/account/showShareLinkModal";
 import { HoverTip } from "../../components/core/HoverTip";
 import CenterLoader from "../../components/core/CenterLoader";
-import OodaInteractiveBackground from "../../components/ooda/OodaInteractiveBackground";
 import showCreateReverseShareModal from "../../components/share/modals/showCreateReverseShareModal";
 import useConfig from "../../hooks/config.hook";
 import useUser from "../../hooks/user.hook";
@@ -63,12 +62,9 @@ const MyShares = () => {
     <div
       style={{
         position: "relative",
-        zIndex: 0,
-        isolation: "isolate",
         minHeight: "calc(100vh - 140px)",
       }}
     >
-      <OodaInteractiveBackground />
       <div style={{ position: "relative", zIndex: 1 }}>
         <Meta title={t("account.reverseShares.title")} />
         <Group position="apart" align="baseline" mb={20}>
