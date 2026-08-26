@@ -1,7 +1,7 @@
-import { Button, Center, createStyles, Group, Text, Menu } from "@mantine/core";
+import { Button, Center, createStyles, Group, Text } from "@mantine/core";
 import { Dropzone as MantineDropzone } from "@mantine/dropzone";
 import React, { ForwardedRef, useEffect, useRef, useState } from "react";
-import { TbCloudUpload, TbUpload, TbFolder } from "react-icons/tb";
+import { TbCloudUpload, TbFolder } from "react-icons/tb";
 import { FormattedMessage } from "react-intl";
 import { fromEvent } from "file-selector";
 import useTranslate from "../../hooks/useTranslate.hook";
@@ -65,7 +65,7 @@ const traverseDirectory = async (entry: any, path = ""): Promise<File[]> => {
     }
 
     const promises = entries.map((e) =>
-      traverseDirectory(e, path ? `${path}/${entry.name}` : entry.name)
+      traverseDirectory(e, path ? `${path}/${entry.name}` : entry.name),
     );
     const results = await Promise.all(promises);
     return results.flat();
@@ -116,16 +116,22 @@ const getFilesFromEvent = async (event: any): Promise<any[]> => {
 
 const Dropzone = ({
   title,
+  description,
   isUploading,
   maxShareSize,
   currentFilesSize = 0,
   onFilesChanged,
+  showFolderButton = true,
+  showChooseFilesButton = false,
 }: {
   title?: string;
+  description?: string;
   isUploading: boolean;
   maxShareSize: number;
   currentFilesSize?: number;
   onFilesChanged: (files: FileUpload[]) => void;
+  showFolderButton?: boolean;
+  showChooseFilesButton?: boolean;
 }) => {
   const t = useTranslate();
   const { classes } = useStyles();
@@ -215,28 +221,48 @@ const Dropzone = ({
             {title || <FormattedMessage id="upload.dropzone.title" />}
           </Text>
           <Text align="center" size="sm" mt="xs" color="dimmed">
-            <FormattedMessage
-              id="upload.dropzone.description"
-              values={{ maxSize: byteToHumanSizeString(maxShareSize) }}
-            />
+            {description || (
+              <FormattedMessage
+                id="upload.dropzone.description"
+                values={{ maxSize: byteToHumanSizeString(maxShareSize) }}
+              />
+            )}
           </Text>
         </div>
       </MantineDropzone>
       <Center>
-        {isFolderUploadSupported && (
+        {showChooseFilesButton ? (
           <Button
             className={classes.control}
             variant="light"
             size="sm"
             radius="xl"
             disabled={isUploading}
-            onClick={() => folderInputRef.current?.click()}
+            onClick={() => openRef.current?.()}
           >
-            <TbFolder style={{ marginRight: 6 }} />
-            <FormattedMessage
-              id={currentFilesSize > 0 ? "upload.button.folder.append" : "upload.button.folder"}
-            />
+            Choose files
           </Button>
+        ) : (
+          showFolderButton &&
+          isFolderUploadSupported && (
+            <Button
+              className={classes.control}
+              variant="light"
+              size="sm"
+              radius="xl"
+              disabled={isUploading}
+              onClick={() => folderInputRef.current?.click()}
+            >
+              <TbFolder style={{ marginRight: 6 }} />
+              <FormattedMessage
+                id={
+                  currentFilesSize > 0
+                    ? "upload.button.folder.append"
+                    : "upload.button.folder"
+                }
+              />
+            </Button>
+          )
         )}
       </Center>
     </div>
