@@ -5,6 +5,16 @@ const withPWA = require("next-pwa")({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   reloadOnOnline: false,
+  // Branding is administrator-managed at runtime. Do not precache these
+  // public assets in the service worker or an old Pingvin/OODA logo can
+  // survive a normal refresh after the asset changes.
+  publicExcludes: [
+    "!noprecache/**/*",
+    "!img/logo.png",
+    "!img/logo-dark.png",
+    "!img/favicon.ico",
+    "!img/icons/**/*",
+  ],
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
