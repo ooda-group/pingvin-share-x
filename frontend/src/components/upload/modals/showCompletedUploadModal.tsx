@@ -17,15 +17,23 @@ const showCompletedUploadModal = (
   share: CompletedShare,
   appUrl: string,
   defaultAppUrl: string,
+  isReverseShare = false,
 ) => {
   const t = translateOutsideContext();
   return modals.openModal({
     closeOnClickOutside: false,
     withCloseButton: false,
     closeOnEscape: false,
-    title: t("upload.modal.completed.share-ready"),
+    title: isReverseShare
+      ? "Files sent to OODA Group"
+      : t("upload.modal.completed.share-ready"),
     children: (
-      <Body share={share} appUrl={appUrl} defaultAppUrl={defaultAppUrl} />
+      <Body
+        share={share}
+        appUrl={appUrl}
+        defaultAppUrl={defaultAppUrl}
+        isReverseShare={isReverseShare}
+      />
     ),
   });
 };
@@ -34,10 +42,12 @@ const Body = ({
   share,
   appUrl,
   defaultAppUrl,
+  isReverseShare,
 }: {
   share: CompletedShare;
   appUrl: string;
   defaultAppUrl: string;
+  isReverseShare: boolean;
 }) => {
   const modals = useModals();
   const router = useRouter();
@@ -49,9 +59,34 @@ const Body = ({
     setShowQR(!showQR);
   };
 
-  const isReverseShare = !!router.query["reverseShareToken"];
-
   const link = `${appUrl !== defaultAppUrl ? appUrl : window.location.origin}/s/${share.id}`;
+
+  const handleDone = () => {
+    modals.closeAll();
+    if (isReverseShare) {
+      router.reload();
+    } else {
+      router.push("/upload");
+    }
+  };
+
+  if (isReverseShare) {
+    return (
+      <Stack align="stretch">
+        <Text size="sm" align="center">
+          Your files were uploaded successfully and sent securely to OODA Group.
+        </Text>
+        {share.notifyReverseShareCreator === true && (
+          <Text size="sm" align="center" color="dimmed">
+            {t("upload.modal.completed.notified-reverse-share-creator")}
+          </Text>
+        )}
+        <Button onClick={handleDone}>
+          <FormattedMessage id="common.button.done" />
+        </Button>
+      </Stack>
+    );
+  }
 
   return (
     <Stack align="stretch">
@@ -86,16 +121,7 @@ const Body = ({
             })}
       </Text>
 
-      <Button
-        onClick={() => {
-          modals.closeAll();
-          if (isReverseShare) {
-            router.reload();
-          } else {
-            router.push("/upload");
-          }
-        }}
-      >
+      <Button onClick={handleDone}>
         <FormattedMessage id="common.button.done" />
       </Button>
     </Stack>
