@@ -19,7 +19,9 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { IntlProvider } from "react-intl";
+import Footer from "../components/footer/Footer";
 import Header from "../components/header/Header";
+import OodaInteractiveBackground from "../components/ooda/OodaInteractiveBackground";
 import { ConfigContext } from "../hooks/config.hook";
 import { UserContext } from "../hooks/user.hook";
 import { LOCALES } from "../i18n/locales";
@@ -30,10 +32,9 @@ import GlobalStyle from "../styles/global.style";
 import globalStyle from "../styles/mantine.style";
 import Config from "../types/config.type";
 import { CurrentUser } from "../types/user.type";
+import { getDefaultConfig } from "../utils/defaultConfig.util";
 import i18nUtil from "../utils/i18n.util";
 import userPreferences from "../utils/userPreferences.util";
-import Footer from "../components/footer/Footer";
-import { getDefaultConfig } from "../utils/defaultConfig.util";
 
 const excludeDefaultLayoutRoutes = ["/admin/config/[category]"];
 const availableMantineColors = [
@@ -298,23 +299,34 @@ function App({ Component, pageProps }: AppProps) {
                     },
                   }}
                 >
+                  {user && <OodaInteractiveBackground />}
                   {excludeDefaultLayoutRoutes.includes(route) ? (
-                    <Component {...pageProps} />
+                    <div
+                      style={{
+                        position: "relative",
+                        zIndex: 1,
+                        minHeight: "100vh",
+                      }}
+                    >
+                      <Component {...pageProps} />
+                    </div>
                   ) : (
-                    <>
-                      <Stack
-                        justify="space-between"
-                        sx={{ minHeight: "100vh" }}
-                      >
-                        <div>
-                          <Header />
-                          <Container>
-                            <Component {...pageProps} />
-                          </Container>
-                        </div>
-                        <Footer />
-                      </Stack>
-                    </>
+                    <Stack
+                      justify="space-between"
+                      sx={{
+                        minHeight: "100vh",
+                        position: "relative",
+                        zIndex: 1,
+                      }}
+                    >
+                      <div>
+                        <Header />
+                        <Container>
+                          <Component {...pageProps} />
+                        </Container>
+                      </div>
+                      <Footer />
+                    </Stack>
                   )}
                 </UserContext.Provider>
               </ConfigContext.Provider>
