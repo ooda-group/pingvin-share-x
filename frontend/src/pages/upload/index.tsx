@@ -1,4 +1,4 @@
-import { Button, Group } from "@mantine/core";
+import { Button, Group, Stack, Text } from "@mantine/core";
 import { useModals } from "@mantine/modals";
 import { cleanNotifications } from "@mantine/notifications";
 import { AxiosError } from "axios";
@@ -6,6 +6,7 @@ import pLimit from "p-limit";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FormattedMessage } from "react-intl";
 import Meta from "../../components/Meta";
+import OodaInteractiveBackground from "../../components/ooda/OodaInteractiveBackground";
 import Dropzone from "../../components/upload/Dropzone";
 import FileList from "../../components/upload/FileList";
 import showCompletedUploadModal from "../../components/upload/modals/showCompletedUploadModal";
@@ -312,45 +313,85 @@ const Upload = ({
   }, [files]);
 
   return (
-    <>
-      <Meta
-        title={isReverseShare ? "Secure upload to OODA Group" : t("upload.title")}
-      />
-      {!isReverseShare && (
-        <Group position="right" mb={20}>
-          <Button
-            loading={isUploading}
-            disabled={files.length <= 0}
-            onClick={() => showCreateUploadModalCallback(files)}
-          >
-            <FormattedMessage id="common.button.share" />
-          </Button>
-        </Group>
-      )}
-      <Dropzone
-        title={
-          isReverseShare
-            ? "Drag & drop your files here"
-            : !autoOpenCreateUploadModal && files.length > 0
-              ? t("share.edit.append-upload")
+    <div
+      style={
+        isReverseShare
+          ? {
+              position: "relative",
+              zIndex: 0,
+              isolation: "isolate",
+              minHeight: "calc(100vh - 140px)",
+            }
+          : undefined
+      }
+    >
+      {isReverseShare && <OodaInteractiveBackground />}
+      <div style={isReverseShare ? { position: "relative", zIndex: 1 } : undefined}>
+        <Meta
+          title={
+            isReverseShare ? "Secure upload to OODA Group" : t("upload.title")
+          }
+        />
+        {isReverseShare && (
+          <Stack align="center" spacing={6} mb={30}>
+            <Text
+              align="center"
+              weight={700}
+              sx={{
+                color: "#FFFFFF",
+                fontSize: "clamp(1.55rem, 3vw, 2.2rem)",
+                lineHeight: 1.15,
+                textShadow: "0 2px 18px rgba(0, 0, 0, 0.35)",
+              }}
+            >
+              You&apos;ve been invited to securely upload files to OODA Group
+            </Text>
+            <Text
+              align="center"
+              size="sm"
+              sx={{ color: "rgba(239, 214, 172, 0.82)" }}
+            >
+              Your files are transferred directly to OODA Group through this
+              secure upload request.
+            </Text>
+          </Stack>
+        )}
+        {!isReverseShare && (
+          <Group position="right" mb={20}>
+            <Button
+              loading={isUploading}
+              disabled={files.length <= 0}
+              onClick={() => showCreateUploadModalCallback(files)}
+            >
+              <FormattedMessage id="common.button.share" />
+            </Button>
+          </Group>
+        )}
+        <Dropzone
+          title={
+            isReverseShare
+              ? "Drag & drop your files here"
+              : !autoOpenCreateUploadModal && files.length > 0
+                ? t("share.edit.append-upload")
+                : undefined
+          }
+          description={
+            isReverseShare
+              ? "or choose files to securely send to OODA Group"
               : undefined
-        }
-        description={
-          isReverseShare
-            ? "or choose files to securely send to OODA Group"
-            : undefined
-        }
-        maxShareSize={maxShareSize}
-        currentFilesSize={currentFilesSize}
-        onFilesChanged={handleDropzoneFilesChanged}
-        isUploading={isUploading}
-        showFolderButton={!isReverseShare}
-        showChooseFilesButton={isReverseShare}
-      />
-      {files.length > 0 && (
-        <FileList<FileUpload> files={files} setFiles={setFiles} />
-      )}
-    </>
+          }
+          maxShareSize={maxShareSize}
+          currentFilesSize={currentFilesSize}
+          onFilesChanged={handleDropzoneFilesChanged}
+          isUploading={isUploading}
+          showFolderButton={!isReverseShare}
+          showChooseFilesButton={isReverseShare}
+        />
+        {files.length > 0 && (
+          <FileList<FileUpload> files={files} setFiles={setFiles} />
+        )}
+      </div>
+    </div>
   );
 };
 export default Upload;
