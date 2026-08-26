@@ -63,6 +63,11 @@ WORKDIR /opt/app
 COPY ./reverse-proxy  /opt/app/reverse-proxy
 COPY ./scripts/docker ./scripts/docker
 
+# Normalize runtime permissions so image behavior does not depend on the
+# checkout/build host's umask. OODA's VPS uses a restrictive umask, and the
+# non-root runtime user must be able to traverse/read these bundled files.
+RUN chmod -R a+rX /opt/app/reverse-proxy /opt/app/scripts/docker
+
 EXPOSE 3000
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=90s CMD /bin/sh -c '(if [[ "$CADDY_DISABLED" = "true" ]]; then curl -fs http://localhost:${BACKEND_PORT:-8080}/api/health; else curl -fs http://localhost:3000/api/health; fi) || exit 1'
