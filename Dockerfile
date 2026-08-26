@@ -63,10 +63,17 @@ WORKDIR /opt/app
 COPY ./reverse-proxy  /opt/app/reverse-proxy
 COPY ./scripts/docker ./scripts/docker
 
-# Normalize runtime permissions so image behavior does not depend on the
-# checkout/build host's umask. OODA's VPS uses a restrictive umask, and the
-# non-root runtime user must be able to traverse/read these bundled files.
-RUN chmod -R a+rX /opt/app/reverse-proxy /opt/app/scripts/docker
+# Normalize bundled runtime permissions so image behavior does not depend on
+# the checkout/build host's umask. OODA's VPS uses a restrictive umask, while
+# the container intentionally drops to a non-root runtime user before starting
+# Caddy, Next.js, Prisma, and the backend. Runtime code/assets need read/traverse
+# access; writable data and public-image paths are separately chowned at start.
+RUN chmod -R a+rX \
+    /opt/app/frontend \
+    /opt/app/backend \
+    /opt/app/reverse-proxy \
+    /opt/app/scripts/docker \
+    /tmp/img
 
 EXPOSE 3000
 
