@@ -67,7 +67,8 @@ export class ReverseShareService {
           remainingUses: data.maxUseCount,
           maxShareSize: data.maxShareSize,
           sendEmailNotification: data.sendEmailNotification,
-          simplified: data.simplified,
+          // OODA client upload requests always use the simplified guest flow.
+          simplified: true,
           // OODA upload requests are private by policy. Do not trust a client-side
           // publicAccess value for the resulting share visibility.
           publicAccess: false,
