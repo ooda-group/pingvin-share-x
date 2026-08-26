@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import SignInForm from "../../components/auth/SignInForm";
 import Meta from "../../components/Meta";
+import OodaInteractiveBackground from "../../components/ooda/OodaInteractiveBackground";
 import useUser from "../../hooks/user.hook";
 import useTranslate from "../../hooks/useTranslate.hook";
 
@@ -35,10 +36,20 @@ const SignIn = ({ redirectPath }: { redirectPath?: string }) => {
   if (isLoading) return <LoadingOverlay overlayOpacity={1} visible />;
 
   return (
-    <>
-      <Meta title={t("signin.title")} />
-      <SignInForm redirectPath={redirectPath ?? "/upload"} />
-    </>
+    <div
+      style={{
+        position: "relative",
+        zIndex: 0,
+        isolation: "isolate",
+        minHeight: "calc(100vh - 140px)",
+      }}
+    >
+      <OodaInteractiveBackground />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <Meta title={t("signin.title")} />
+        <SignInForm redirectPath={redirectPath ?? "/upload"} />
+      </div>
+    </div>
   );
 };
 export default SignIn;
