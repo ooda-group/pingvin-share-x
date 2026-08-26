@@ -8,7 +8,6 @@ import {
   Stack,
   Text,
   Title,
-  useMantineTheme,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 
@@ -45,7 +44,6 @@ const categories = [
 ];
 
 export default function AppShellDemo() {
-  const theme = useMantineTheme();
   const router = useRouter();
   const t = useTranslate();
 
@@ -166,10 +164,9 @@ export default function AppShellDemo() {
       <AppShell
         styles={{
           main: {
-            background:
-              theme.colorScheme === "dark"
-                ? theme.colors.dark[8]
-                : theme.colors.gray[0],
+            background: "transparent",
+            position: "relative",
+            zIndex: 1,
           },
         }}
         navbar={
