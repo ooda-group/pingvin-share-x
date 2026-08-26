@@ -19,7 +19,12 @@ const Logo = ({ height, width }: { height: number; width: number }) => {
       src={logoSrc}
       alt="logo"
       height={height}
-      width={width}
+      style={{
+        height,
+        width: "auto",
+        maxWidth: width * 2,
+        objectFit: "contain",
+      }}
       onError={() => {
         if (logoSrc !== defaultLogoSrc) setLogoSrc(defaultLogoSrc);
       }}
