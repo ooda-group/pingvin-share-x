@@ -16,6 +16,18 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
+      - name: Verify OODA source policy hooks
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          grep -q 'maxUseCount: 3' frontend/src/components/share/modals/showCreateReverseShareModal.tsx
+          grep -q 'publicAccess: false' frontend/src/components/share/modals/showCreateReverseShareModal.tsx
+          ! grep -q 'account.reverseShares.modal.public-access' frontend/src/components/share/modals/showCreateReverseShareModal.tsx
+          grep -q 'simplified: true' backend/src/reverseShare/reverseShare.service.ts
+          grep -q 'publicAccess: false' backend/src/reverseShare/reverseShare.service.ts
+          grep -q 'Send files to OODA Group' frontend/src/components/upload/modals/showCreateReverseUploadModal.tsx
+          grep -q 'OodaInteractiveBackground' frontend/src/pages/upload/index.tsx
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -24,7 +36,131 @@ jobs:
         with:
           context: .
           push: false
-          load: false
+          load: true
           tags: ooda-files:1.22.1-ooda.test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Create isolated runtime configuration
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p .ci-data/images
+          chmod -R 0777 .ci-data
+          cat > .ci-config.yaml <<'EOF'
+          general:
+            appName: OODA Files CI
+            appUrl: http://localhost:3000
+            secureCookies: "false"
+            showHomePage: "false"
+            sessionDuration: 3 months
+            defaultLanguage: en-US
+          appearance:
+            themePrimaryColor: custom
+            themePrimaryColorOverride: "#500000"
+            themeRadius: md
+            themeColorScheme: dark
+            uploadProgressStyle: circle
+          share:
+            allowRegistration: "false"
+            allowUnauthenticatedShares: "false"
+            defaultExpiration: 7 days
+            maxExpiration: 30 days
+            fileRetentionPeriod: 0 days
+            shareIdLength: "16"
+            maxSize: "50000000000"
+            zipCompressionLevel: "0"
+            chunkSize: "10000000"
+            reverseShareSimpleOnly: "true"
+            autoOpenShareModal: "true"
+            allowAdminAccessAllShares: "true"
+            enableUserRecipients: "false"
+          cache:
+            redis-enabled: "false"
+          email:
+            sendHtmlEmails: "false"
+            enableShareEmailRecipients: "false"
+            enableShareDownloadNotifications: "false"
+            shareRecipientsReplyToCreator: "true"
+          smtp:
+            enabled: "false"
+          oauth:
+            allowRegistration: "false"
+            ignoreTotp: "true"
+            disablePassword: "false"
+            google-enabled: "false"
+          s3:
+            enabled: "false"
+          legal:
+            enabled: "false"
+          initUser:
+            enabled: false
+          EOF
+          chmod 0644 .ci-config.yaml
+
+      - name: Start isolated OODA Files container
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker run -d \
+            --name ooda-files-ci \
+            -p 127.0.0.1:3000:3000 \
+            -e CONFIG_FILE=/opt/app/config.yaml \
+            -e PUID=1000 \
+            -e PGID=1000 \
+            -v "$PWD/.ci-data:/opt/app/backend/data:rw" \
+            -v "$PWD/.ci-config.yaml:/opt/app/config.yaml:ro" \
+            ooda-files:1.22.1-ooda.test
+
+      - name: Verify isolated runtime health and configuration
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          healthy=0
+          for attempt in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then
+              healthy=1
+              break
+            fi
+            sleep 2
+          done
+          if [ "$healthy" -ne 1 ]; then
+            docker logs ooda-files-ci || true
+            exit 1
+          fi
+
+          python3 - <<'PY'
+          import json
+          import urllib.request
+
+          with urllib.request.urlopen("http://127.0.0.1:3000/api/configs", timeout=10) as response:
+              items = json.load(response)
+
+          values = {item["key"]: item.get("value") for item in items}
+          expected = {
+              "general.appName": "OODA Files CI",
+              "general.showHomePage": "false",
+              "share.maxSize": "50000000000",
+              "share.defaultExpiration": "7 days",
+              "share.maxExpiration": "30 days",
+              "share.reverseShareSimpleOnly": "true",
+              "share.autoOpenShareModal": "true",
+          }
+
+          for key, expected_value in expected.items():
+              actual = values.get(key)
+              if str(actual) != expected_value:
+                  raise SystemExit(f"{key}: expected {expected_value!r}, got {actual!r}")
+
+          print("Runtime configuration smoke test passed")
+          PY
+
+          curl -fsS http://127.0.0.1:3000/auth/signIn >/dev/null
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs ooda-files-ci || true
+
+      - name: Remove isolated test container
+        if: always()
+        run: docker rm -f ooda-files-ci >/dev/null 2>&1 || true
