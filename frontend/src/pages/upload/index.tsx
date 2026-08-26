@@ -79,7 +79,6 @@ const Upload = ({
     }
 
     const fileUploadPromises = files.map(async (file, fileIndex) =>
-      // Limit the number of concurrent uploads to 3
       promiseLimit(async () => {
         let fileId;
 
@@ -97,8 +96,6 @@ const Upload = ({
         setFileProgress(1);
 
         let chunks = Math.ceil(file.size / chunkSize.current);
-
-        // If the file is 0 bytes, we still need to upload 1 chunk
         if (chunks == 0) chunks++;
 
         for (let chunkIndex = 0; chunkIndex < chunks; chunkIndex++) {
@@ -140,15 +137,12 @@ const Upload = ({
               e instanceof AxiosError &&
               e.response?.data.error == "unexpected_chunk_index"
             ) {
-              // Retry with the expected chunk index
               chunkIndex = e.response!.data!.expectedChunkIndex - 1;
               continue;
             } else {
               setFileProgress(-1);
-              // Retry after 5 seconds
               await new Promise((resolve) => setTimeout(resolve, 5000));
               chunkIndex = -1;
-
               continue;
             }
           }
@@ -212,23 +206,15 @@ const Upload = ({
 
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
-      if (modals.modals.length > 0) {
-        return;
-      }
+      if (modals.modals.length > 0) return;
 
       const clipboardData = e.clipboardData;
-
-      if (!clipboardData) {
-        return;
-      }
+      if (!clipboardData) return;
 
       if (clipboardData?.getData("text/plain")) {
         const pastedText = clipboardData.getData("text/plain");
-        if (!pastedText) {
-          return;
-        }
+        if (!pastedText) return;
 
-        // Create a sanitised file name from the pasted text
         const safeName = pastedText
           .substring(0, 50)
           .replace(/[^a-zA-Z0-9 ]/g, "")
@@ -261,14 +247,10 @@ const Upload = ({
     };
 
     window.addEventListener("paste", handlePaste);
-
-    return () => {
-      window.removeEventListener("paste", handlePaste);
-    };
+    return () => window.removeEventListener("paste", handlePaste);
   }, [autoOpenCreateUploadModal, modals.modals.length]);
 
   useEffect(() => {
-    // Check if there are any files that failed to upload
     const fileErrorCount = files.filter(
       (file) => file.uploadingProgress == -1,
     ).length;
@@ -289,7 +271,6 @@ const Upload = ({
       errorToastShown = false;
     }
 
-    // Complete share
     if (
       files.length > 0 &&
       files.every((file) => file.uploadingProgress >= 100) &&
@@ -384,8 +365,8 @@ const Upload = ({
           currentFilesSize={currentFilesSize}
           onFilesChanged={handleDropzoneFilesChanged}
           isUploading={isUploading}
-          showFolderButton={!isReverseShare}
-          showChooseFilesButton={isReverseShare}
+          showFolderButton={false}
+          showChooseFilesButton={true}
         />
         {files.length > 0 && (
           <FileList<FileUpload> files={files} setFiles={setFiles} />
