@@ -68,7 +68,9 @@ export class ReverseShareService {
           maxShareSize: data.maxShareSize,
           sendEmailNotification: data.sendEmailNotification,
           simplified: data.simplified,
-          publicAccess: data.publicAccess,
+          // OODA upload requests are private by policy. Do not trust a client-side
+          // publicAccess value for the resulting share visibility.
+          publicAccess: false,
           creatorId,
         },
       });
