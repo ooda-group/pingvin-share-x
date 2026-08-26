@@ -30,8 +30,11 @@ jobs:
           grep -q 'showFolderButton={false}' frontend/src/pages/upload/index.tsx
           grep -q 'showChooseFilesButton={true}' frontend/src/pages/upload/index.tsx
           grep -q 'ooda-files-20260826-2' frontend/src/components/Logo.tsx
-          grep -q 'no-store, no-cache, must-revalidate, max-age=0' reverse-proxy/Caddyfile
-          grep -q 'no-store, no-cache, must-revalidate, max-age=0' reverse-proxy/Caddyfile.trust-proxy
+          grep -q '!img/logo.png' frontend/next.config.js
+          grep -q '!img/logo-dark.png' frontend/next.config.js
+          grep -q '>Cache-Control "no-store, no-cache, must-revalidate, max-age=0"' reverse-proxy/Caddyfile
+          grep -q '>Cache-Control "no-store, no-cache, must-revalidate, max-age=0"' reverse-proxy/Caddyfile.trust-proxy
+          grep -q 'chmod -R a+rX' Dockerfile
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -162,12 +165,16 @@ jobs:
 
           curl -fsS http://127.0.0.1:3000/auth/signIn >/dev/null
 
-          # Branding responses must not be cacheable, otherwise an old Pingvin
-          # logo can survive a production image/branding change in the browser.
+          # Branding responses must bypass service-worker precache and must not
+          # be cacheable by the browser/proxy, otherwise an old Pingvin logo can
+          # survive a production image or administrator branding change.
           for asset in /img/logo.png /img/logo-dark.png /img/favicon.ico; do
             headers="$(curl -fsSI "http://127.0.0.1:3000${asset}")"
             printf '%s\n' "$headers" | grep -qi '^Cache-Control:.*no-store'
           done
+
+          ! grep -q 'url:"/img/logo.png"' frontend/public/sw.js
+          ! grep -q 'url:"/img/logo-dark.png"' frontend/public/sw.js
 
       - name: Show container logs on failure
         if: failure()
