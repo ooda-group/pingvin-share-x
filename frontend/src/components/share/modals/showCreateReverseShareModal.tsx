@@ -96,14 +96,14 @@ const Body = ({
     initialValues: {
       token: generatedToken,
       maxShareSize: userMaxShareSize,
-      maxUseCount: 1,
+      maxUseCount: 3,
       sendEmailNotification: false,
       expiration_num: defaultTimespan.value,
       expiration_unit: `-${defaultTimespan.unit}` as string,
       simplified: !reverseShareSimpleOnly
         ? false
         : !!(getCookie("reverse-share.simplified") ?? false),
-      publicAccess: !!(getCookie("reverse-share.public-access") ?? true),
+      publicAccess: false,
     },
     validate: yupResolver(
       yup.object().shape({
@@ -141,9 +141,8 @@ const Body = ({
       return;
     }
 
-    // remember simplified and publicAccess in cookies
+    // Remember the selected simplified mode between requests.
     setCookie("reverse-share.simplified", values.simplified);
-    setCookie("reverse-share.public-access", values.publicAccess);
 
     const expirationDate = moment().add(
       form.values.expiration_num,
@@ -318,17 +317,6 @@ const Body = ({
               })}
             />
           )}
-          <Switch
-            mt="xs"
-            labelPosition="left"
-            label={t("account.reverseShares.modal.public-access")}
-            description={t(
-              "account.reverseShares.modal.public-access.description",
-            )}
-            {...form.getInputProps("publicAccess", {
-              type: "checkbox",
-            })}
-          />
           <Button mt="md" type="submit">
             <FormattedMessage id="common.button.create" />
           </Button>
