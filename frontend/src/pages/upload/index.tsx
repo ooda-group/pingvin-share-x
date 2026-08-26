@@ -18,7 +18,6 @@ import shareService from "../../services/share.service";
 import { FileUpload } from "../../types/File.type";
 import { CreateShare, Share } from "../../types/share.type";
 import toast from "../../utils/toast.util";
-import { useRouter } from "next/router";
 import {
   getNormalizedFileName,
   filterDuplicateFiles,
@@ -38,7 +37,6 @@ const Upload = ({
   simplified: boolean;
 }) => {
   const modals = useModals();
-  const router = useRouter();
   const t = useTranslate();
 
   const { user } = useUser();
@@ -67,7 +65,6 @@ const Upload = ({
     setisUploading(true);
 
     try {
-      const isReverseShare = router.pathname != "/upload";
       const totalSize = files.reduce((acc, file) => acc + file.size, 0);
       createdShare = await shareService.create(
         { ...share, size: totalSize },
@@ -295,6 +292,7 @@ const Upload = ({
             share,
             config.get("general.appUrl"),
             config.get("general.appUrl", true),
+            isReverseShare,
           );
           setFiles([]);
         })
@@ -304,26 +302,39 @@ const Upload = ({
 
   return (
     <>
-      <Meta title={t("upload.title")} />
-      <Group position="right" mb={20}>
-        <Button
-          loading={isUploading}
-          disabled={files.length <= 0}
-          onClick={() => showCreateUploadModalCallback(files)}
-        >
-          <FormattedMessage id="common.button.share" />
-        </Button>
-      </Group>
+      <Meta
+        title={isReverseShare ? "Secure upload to OODA Group" : t("upload.title")}
+      />
+      {!isReverseShare && (
+        <Group position="right" mb={20}>
+          <Button
+            loading={isUploading}
+            disabled={files.length <= 0}
+            onClick={() => showCreateUploadModalCallback(files)}
+          >
+            <FormattedMessage id="common.button.share" />
+          </Button>
+        </Group>
+      )}
       <Dropzone
         title={
-          !autoOpenCreateUploadModal && files.length > 0
-            ? t("share.edit.append-upload")
+          isReverseShare
+            ? "Drag & drop your files here"
+            : !autoOpenCreateUploadModal && files.length > 0
+              ? t("share.edit.append-upload")
+              : undefined
+        }
+        description={
+          isReverseShare
+            ? "or choose files to securely send to OODA Group"
             : undefined
         }
         maxShareSize={maxShareSize}
         currentFilesSize={currentFilesSize}
         onFilesChanged={handleDropzoneFilesChanged}
         isUploading={isUploading}
+        showFolderButton={!isReverseShare}
+        showChooseFilesButton={isReverseShare}
       />
       {files.length > 0 && (
         <FileList<FileUpload> files={files} setFiles={setFiles} />
