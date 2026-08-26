@@ -154,6 +154,9 @@ const Header = () => {
     setMobileMenuView("root");
   }, [close, router.pathname]);
 
+  const isGuestReverseShare =
+    !user && router.pathname === "/upload/[reverseShareToken]";
+
   const authenticatedLinks: NavLink[] = [
     {
       link: "/upload",
@@ -167,27 +170,29 @@ const Header = () => {
     },
   ];
 
-  let unauthenticatedLinks: NavLink[] = [
-    {
-      link: "/auth/signIn",
-      label: t("navbar.signin"),
-    },
-  ];
+  let unauthenticatedLinks: NavLink[] = isGuestReverseShare
+    ? []
+    : [
+        {
+          link: "/auth/signIn",
+          label: t("navbar.signin"),
+        },
+      ];
 
-  if (config.get("share.allowUnauthenticatedShares")) {
+  if (!isGuestReverseShare && config.get("share.allowUnauthenticatedShares")) {
     unauthenticatedLinks.unshift({
       link: "/upload",
       label: t("navbar.upload"),
     });
   }
 
-  if (config.get("general.showHomePage"))
+  if (!isGuestReverseShare && config.get("general.showHomePage"))
     unauthenticatedLinks.unshift({
       link: "/",
       label: t("navbar.home"),
     });
 
-  if (config.get("share.allowRegistration"))
+  if (!isGuestReverseShare && config.get("share.allowRegistration"))
     unauthenticatedLinks.push({
       link: "/auth/signUp",
       label: t("navbar.signup"),
@@ -349,12 +354,14 @@ const Header = () => {
           <Group spacing={5} className={classes.links}>
             <Group>{desktopItems}</Group>
           </Group>
-          <Burger
-            opened={opened}
-            onClick={toggle}
-            className={classes.burger}
-            size="sm"
-          />
+          {!isGuestReverseShare && (
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              className={classes.burger}
+              size="sm"
+            />
+          )}
         </Container>
       </MantineHeader>
       <Transition transition="scale-y" duration={20} mounted={opened}>
