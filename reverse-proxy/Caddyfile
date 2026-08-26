@@ -1,4 +1,9 @@
 :3000 {
+	# Prevent stale branding after an administrator updates OODA Files assets.
+	@ooda_branding path /img/logo.png /img/logo-dark.png /img/favicon.ico /img/icons/*
+	header @ooda_branding Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+	header @ooda_branding Pragma "no-cache"
+
 	# Reverse proxy for /api
 	reverse_proxy /api/* http://localhost:{$BACKEND_PORT:8080}
 
